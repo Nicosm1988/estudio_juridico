@@ -1,0 +1,4 @@
+import { notFound } from "next/navigation";
+import { practiceAreas } from "@/lib/content";
+export function generateStaticParams(){return practiceAreas.map(({slug})=>({slug}))}
+export default async function Area({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const area=practiceAreas.find(x=>x.slug===slug);if(!area)notFound();return <main className="section"><div className="eyebrow">CONTENIDO PROVISIONAL</div><h2>{area.name}</h2><p className="lead">{area.summary} Cada consulta requiere una revisión individual de sus circunstancias y documentación.</p><div className="split"><div><h3>Situaciones frecuentes</h3><p>La información específica de esta área será validada por el equipo profesional.</p></div><div><h3>Primer paso</h3><p>Iniciá la consulta guiada y describí brevemente tu situación, sin adjuntar datos sensibles.</p></div></div></main>}

@@ -1,0 +1,2 @@
+import { studio } from "@/lib/content";
+export default function Contacto(){return <main className="section"><div className="eyebrow">CONTACTO</div><h2>Hablemos de tu consulta</h2><p className="lead">Usá la consulta guiada para ordenar la información inicial. Si preferís recepción, escribinos a <a href={`mailto:${studio.email}`}>{studio.email}</a>.</p><p className="notice">El correo y los datos institucionales son placeholders pendientes de validación.</p></main>}
