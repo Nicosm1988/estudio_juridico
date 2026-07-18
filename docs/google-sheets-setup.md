@@ -1,6 +1,6 @@
 # Google Sheets como almacenamiento
 
-Archivo objetivo: `15UpM0lCgKJXwTHoyYjZpZ0OyVQuxYQ54Uhg7DyLfGwQ`.
+Archivo objetivo: `1evAh6nSc4XnVMf0M9l552EiaymLG54BcYIPb8qOJk8E`.
 
 1. Compartir el archivo con `taniuskaynicolai@gmail.com` como editor.
 2. En el Sheet abrir **Extensiones → Apps Script** y pegar `integrations/google-apps-script/Code.gs`.
