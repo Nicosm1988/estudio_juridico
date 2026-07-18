@@ -1,29 +1,9 @@
 "use client";
-import { FormEvent, useEffect, useRef, useState } from "react";
-import { MessageCircle, Send, X } from "lucide-react";
-
-type Item = { from: "bot" | "user"; text: string };
-export function ChatWidget() {
-  const [open, setOpen] = useState(false); const [loading, setLoading] = useState(false); const [input, setInput] = useState("");
-  const [conversationId, setConversationId] = useState<string>(); const [items, setItems] = useState<Item[]>([]); const end = useRef<HTMLDivElement>(null);
-  useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [items]);
-  async function begin() {
-    setOpen(true); if (conversationId || loading) return; setLoading(true);
-    const response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); const data = await response.json();
-    if (response.ok) { setConversationId(data.conversationId); setItems([{ from: "bot", text: data.message }]); } else setItems([{ from: "bot", text: data.error }]); setLoading(false);
-  }
-  async function send(event: FormEvent) {
-    event.preventDefault(); const text = input.trim(); if (!text || !conversationId || loading) return; setInput(""); setItems(v => [...v, { from: "user", text }]); setLoading(true);
-    const response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ conversationId, message: text }) }); const data = await response.json();
-    setItems(v => [...v, { from: "bot", text: response.ok ? data.message : data.error }]); setLoading(false);
-  }
-  return <>
-    <button className="chat-launcher" onClick={begin}><MessageCircle size={20}/> Iniciar consulta guiada</button>
-    {open && <section className="chat-panel" aria-label="Asistente de admisión">
-      <header><div><strong>Consulta guiada</strong><small>Asistente automatizado</small></div><button aria-label="Cerrar" onClick={() => setOpen(false)}><X/></button></header>
-      <div className="chat-messages" aria-live="polite">{items.map((item, i) => <p className={item.from} key={i}>{item.text}</p>)}{loading && <p className="bot muted">Escribiendo…</p>}<div ref={end}/></div>
-      <form onSubmit={send}><input value={input} onChange={e => setInput(e.target.value)} placeholder="Escribí tu respuesta" maxLength={2000}/><button disabled={!conversationId || loading} aria-label="Enviar"><Send size={18}/></button></form>
-      <small className="chat-legal">No brinda asesoramiento jurídico. Evitá datos sensibles.</small>
-    </section>}
-  </>;
-}
+import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { ArrowUp, RotateCw, X } from "lucide-react";
+type Item={from:"bot"|"user";text:string};
+export function ChatWidget(){const[open,setOpen]=useState(false),[loading,setLoading]=useState(false),[failed,setFailed]=useState(false);const[input,setInput]=useState("");const[conversationId,setConversationId]=useState<string>();const[items,setItems]=useState<Item[]>([]);const end=useRef<HTMLDivElement>(null),field=useRef<HTMLInputElement>(null);useEffect(()=>{end.current?.scrollIntoView({behavior:"smooth"})},[items]);useEffect(()=>{const handler=(event:MouseEvent)=>{const target=event.target as HTMLElement;if(target.closest("[data-open-chat]")){event.preventDefault();void begin()}};document.addEventListener("click",handler);return()=>document.removeEventListener("click",handler)});
+async function begin(force=false){setOpen(true);if((conversationId&&!force)||loading)return;setLoading(true);setFailed(false);try{const response=await fetch("/api/chat",{method:"POST",headers:{"content-type":"application/json"},body:"{}"}),data=await response.json();if(!response.ok)throw new Error(data.error);setConversationId(data.conversationId);setItems([{from:"bot",text:data.message}]);setTimeout(()=>field.current?.focus(),50)}catch(error){setFailed(true);setItems([{from:"bot",text:error instanceof Error?error.message:"No pudimos iniciar la consulta."}])}finally{setLoading(false)}}
+async function send(event?:FormEvent){event?.preventDefault();const text=input.trim();if(!text||!conversationId||loading)return;setInput("");setItems(v=>[...v,{from:"user",text}]);setLoading(true);try{const response=await fetch("/api/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({conversationId,message:text})}),data=await response.json();if(!response.ok)throw new Error(data.error);setItems(v=>[...v,{from:"bot",text:data.message}])}catch(error){setItems(v=>[...v,{from:"bot",text:error instanceof Error?error.message:"No pudimos enviar tu respuesta."}])}finally{setLoading(false);setTimeout(()=>field.current?.focus(),50)}}
+function keyDown(event:KeyboardEvent<HTMLInputElement>){if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();void send()}}
+return <><button className="chat-launcher" onClick={()=>begin()}><span className="chat-mark">EJ</span><span><strong>Consulta guiada</strong><small>Iniciar admisión</small></span></button>{open&&<section className="chat-panel" aria-label="Asistente de admisión"><header><div><span className="status-dot"/><span><strong>Consulta guiada</strong><small>Asistente automatizado</small></span></div><button aria-label="Cerrar" onClick={()=>setOpen(false)}><X/></button></header><div className="chat-messages" aria-live="polite">{items.map((item,i)=><p className={item.from} key={i}>{item.text}</p>)}{loading&&<p className="bot muted">Preparando respuesta…</p>}{failed&&<button className="retry" onClick={()=>begin(true)}><RotateCw size={16}/> Reintentar conexión</button>}<div ref={end}/></div><form onSubmit={send}><input ref={field} value={input} onKeyDown={keyDown} onChange={e=>setInput(e.target.value)} disabled={!conversationId||loading} placeholder={failed?"Conexión no disponible":"Escribí y presioná Enter"} maxLength={2000}/><button disabled={!conversationId||loading||!input.trim()} aria-label="Enviar"><ArrowUp size={18}/></button></form><small className="chat-legal">No brinda asesoramiento jurídico. Evitá datos sensibles.</small></section>}</>}
